@@ -167,7 +167,7 @@ net z-pos-cmd       =>  pid.z.command
 net z-vel-cmd       =>  pid.z.command-deriv
 net z-pos-fb        =>  pid.z.feedback
 net z-output        =>  pid.z.output
-
+fo foobar x foo bar baz
 # Step Gen signals/setup
 
 setp   hm2_5i25.0.stepgen.02.dirsetup        [AXIS_2]DIRSETUP

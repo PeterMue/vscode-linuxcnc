@@ -7,23 +7,107 @@
 		},
 		{
 			"include": "#strings"
+		},
+		{
+			"include": "#numbers"
+		},
+		{
+			"include": "#constants"
+		},
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#ini-ref"
 		}
 	],
 	"repository": {
 		"keywords": {
-			"patterns": [{
-				"name": "keyword.control.linuxcnc-hal",
-				"match": "\\b(if|while|for|return)\\b"
-			}]
+			"patterns": [
+				{
+					"name": "keyword.control.linuxcnc.hal",
+					"match": "\\b(loadrt|loadusr|waitusr|unload|lock|unlock|net|linkps|linksp|unlinkp|newsig|delsig|setp|getp|ptype|sets|gets|stype|addf|delf|show|list|save|status|start|stop|source|echo|unecho|quit|exit)\\b"
+				},
+				{
+					"name": "keyword.operator.expression.linuxcnc.hal",
+					"match": "(<=>|=>|<=)"
+				}
+			]
 		},
 		"strings": {
-			"name": "string.quoted.double.linuxcnc-hal",
+			"name": "string.quoted.double.linuxcnc.hal",
 			"begin": "\"",
 			"end": "\"",
 			"patterns": [
 				{
-					"name": "constant.character.escape.linuxcnc-hal",
+					"name": "constant.character.escape.linuxcnc.hal",
 					"match": "\\\\."
+				}
+			]
+		},
+		"numbers": {
+			"patterns": [
+				{
+					"match": "(?x)\n\\b(?<!\\$)\n0(x|X)\n(\n  (?<!\\.)[0-9a-fA-F]([0-9a-fA-F_]*[0-9a-fA-F])?[Ll]?(?!\\.)\n  |\n  (\n    [0-9a-fA-F]([0-9a-fA-F_]*[0-9a-fA-F])?\\.?\n    |\n    ([0-9a-fA-F]([0-9a-fA-F_]*[0-9a-fA-F])?)?\\.[0-9a-fA-F]([0-9a-fA-F_]*[0-9a-fA-F])?\n  )\n  [Pp][+-]?[0-9]([0-9_]*[0-9])?[FfDd]?\n)\n\\b(?!\\$)",
+					"name": "constant.numeric.hex.linuxcnc.hal"
+				},
+				{
+					"match": "\\b(?<!\\$)0(b|B)[01]([01_]*[01])?[Ll]?\\b(?!\\$)",
+					"name": "constant.numeric.binary.linuxcnc.hal"
+				},
+				{
+					"match": "\\b(?<!\\$)0[0-7]([0-7_]*[0-7])?[Ll]?\\b(?!\\$)",
+					"name": "constant.numeric.octal.linuxcnc.hal"
+				},
+				{
+					"match": "(?x)\n(?<!\\$)\n(\n  \\b[0-9]([0-9_]*[0-9])?\\.\\B(?!\\.)\n  |\n  \\b[0-9]([0-9_]*[0-9])?\\.([Ee][+-]?[0-9]([0-9_]*[0-9])?)[FfDd]?\\b\n  |\n  \\b[0-9]([0-9_]*[0-9])?\\.([Ee][+-]?[0-9]([0-9_]*[0-9])?)?[FfDd]\\b\n  |\n  \\b[0-9]([0-9_]*[0-9])?\\.([0-9]([0-9_]*[0-9])?)([Ee][+-]?[0-9]([0-9_]*[0-9])?)?[FfDd]?\\b\n  |\n  (?<!\\.)\\B\\.[0-9]([0-9_]*[0-9])?([Ee][+-]?[0-9]([0-9_]*[0-9])?)?[FfDd]?\\b\n  |\n  \\b[0-9]([0-9_]*[0-9])?([Ee][+-]?[0-9]([0-9_]*[0-9])?)[FfDd]?\\b\n  |\n  \\b[0-9]([0-9_]*[0-9])?([Ee][+-]?[0-9]([0-9_]*[0-9])?)?[FfDd]\\b\n  |\n  \\b(0|[1-9]([0-9_]*[0-9])?)(?!\\.)[Ll]?\\b\n)\n(?!\\$)",
+					"name": "constant.numeric.decimal.linuxcnc.hal"
+				}
+			]
+		},
+		"constants": {
+			"patterns": [
+				{
+					"match": "\\b(true|false|null)\\b",
+					"name": "constant.language.linuxcnc.hal"
+				}
+			]
+		},
+		"comments": {
+			"patterns": [
+				{
+					"begin": "(^\\s+)?(?=#)",
+					"beginCaptures": {
+						"1": {
+							"name": "punctuation.whitespace.comment.leading.linuxcnc.hal"
+						}
+					},
+					"end": "(?!\\G)",
+					"patterns": [
+						{
+							"begin": "#",
+							"beginCaptures": {
+								"0": {
+									"name": "punctuation.definition.comment.linuxcnc.hal"
+								}
+							},
+							"end": "\\n|(?=\\?>)",
+							"name": "comment.line.number-sign.linuxcnc.hal"
+						}
+					]
+				}
+			]
+		},
+		"ini-ref": {
+			"patterns": [
+				{
+					"name": "meta.preprocessor.linuxcnc.hal",
+					"match": "\\[(\\w+)\\](\\w+)",
+					"captures": {
+						"2": {
+							"name": "meta.preprocessor.string"
+						}
+					}
 				}
 			]
 		}
