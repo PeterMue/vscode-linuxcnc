@@ -1,0 +1,26 @@
+{
+    "name": "vscode-linuxcnc",
+    "displayName": "vscode-linuxcnc",
+    "description": "Language support for LinuxCNC hal files",
+    "version": "0.0.1",
+    "publisher": "PeterMue",
+    "engines": {
+        "vscode": "^1.22.0"
+    },
+    "categories": [
+        "Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "linuxcnc-hal",
+            "aliases": ["LinuxCNC HAL", "linuxcnc-hal"],
+            "extensions": [".hal"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "linuxcnc-hal",
+            "scopeName": "source.linuxcnc.hal",
+            "path": "./syntaxes/linuxcnc-hal.tmLanguage.json"
+        }]
+    }
+}
