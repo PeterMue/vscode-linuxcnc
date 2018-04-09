@@ -6,7 +6,7 @@ This extension adds basic language support for LinuxCNC files to Visual Studio C
 
 Syntax highlight for LinuxCNC hal files.
 
-\!\[HAL File Syntax\]\(images/hal-syntax.png\)
+![HAL File Syntax](images/hal-syntax.png)
 
 
 ## Release Notes
