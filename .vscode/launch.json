@@ -5,6 +5,16 @@
 {
 	"version": "0.2.0",
     "configurations": [
+    {
+        "name": "Launch Sample",
+        "program": "${workspaceFolder}/out/Sample.js",
+        "request": "launch",
+        "skipFiles": [
+            "<node_internals>/**"
+        ],
+        "type": "pwa-node", 
+        "preLaunchTask": "tsc: build - tsconfig.json"
+    },
         {
             "name": "Extension",
             "type": "extensionHost",

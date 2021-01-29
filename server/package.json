@@ -1,0 +1,18 @@
+{
+  "name": "vscode-linuxcnc-languageserver",
+  "description": "LinuxCNC Language Server",
+  "version": "0.2.0",
+  "license": "SEE LICENSE IN LICENSE",
+  "publisher": "PeterMue",
+  "engines": {
+    "vscode": "^1.22.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PeterMue/vscode-linuxcnc.git"
+  },
+  "dependencies": {
+    "vscode-languageserver": "^7.0.0",
+    "vscode-languageserver-textdocument": "^1.0.1"
+  }
+}

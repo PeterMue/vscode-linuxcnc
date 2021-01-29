@@ -1,0 +1,21 @@
+{
+    "name": "vscode-linuxcnc-lsp-client",
+    "description": "VSCode client for the LinuxCNC language server",
+    "version": "0.2.0",
+    "license": "SEE LICENSE IN LICENSE",
+    "publisher": "PeterMue",
+    "engines": {
+        "vscode": "^1.22.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/PeterMue/vscode-linuxcnc.git"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^7.0.0"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.52.0",
+        "vscode-test": "^1.5.0"
+    }
+}
