@@ -179,3 +179,4 @@ tags
 out
 *.tsbuildinfo
 *.vsix
+.antlr

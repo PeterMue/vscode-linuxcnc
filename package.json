@@ -74,19 +74,23 @@
         ]
     },
     "dependencies": {
-        "vscode-languageclient": "^7.0.0"
+        "vscode-languageclient": "^7.0.0",
+        "antlr4-c3": "^1.1.13",
+        "antlr4ts": "^0.5.0-alpha.4"
     },
     "scripts": {
         "vscode:prepublish": "npm run build",
         "compile": "tsc -b",
         "watch" : "tsc -b -w",
-        "build": "npm run tsc -b",
+        "antlr4ts": "antlr4ts server/src/grammar/HAL.g4",
+        "build": "npm run antlr4ts && tsc -b",
         "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
         "test" : "sh ./scripts/e2e.sh"
     },
     "devDependencies": {
         "@tsconfig/recommended": "^1.0.1",
         "@types/node": "^14.14.22",
+        "antlr4ts-cli": "^0.5.0-alpha.4",
         "vscode": "^1.1.37",
 		"typescript": "^4.0.2"
     }
