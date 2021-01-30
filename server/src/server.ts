@@ -1,29 +1,37 @@
 import {
+    CharStreams,
+    CommonTokenStream,
+    Parser,
+    ParserErrorListener,
+    RecognitionException,
+    Recognizer,
+    Token
+} from "antlr4ts";
+import { ATNConfigSet } from "antlr4ts/atn/ATNConfigSet";
+import { SimulatorState } from "antlr4ts/atn/SimulatorState";
+import { DFA } from "antlr4ts/dfa/DFA";
+import { BitSet } from "antlr4ts/misc/BitSet";
+import { LANGUAGE_SERVER_ID } from "../../common/out/constants";
+import { TextDocument } from "vscode-languageserver-textdocument";
+import {
+    CompletionItem,
+    CompletionItemTag,
     createConnection,
-    TextDocuments,
     Diagnostic,
     DiagnosticSeverity,
-    ProposedFeatures,
-    InitializeParams,
     DidChangeConfigurationNotification,
-    CompletionItem,
-    CompletionItemKind,
-    TextDocumentPositionParams,
-    TextDocumentSyncKind,
-    InitializeResult,
-    NotificationHandler,
-    InitializedParams,
     DidChangeConfigurationParams,
-    MarkupContent,
-    MarkupKind,
-    CompletionItemTag
+    InitializeParams,
+    InitializeResult,
+    ProposedFeatures,
+    TextDocumentPositionParams,
+    TextDocuments,
+    TextDocumentSyncKind
 } from "vscode-languageserver/node";
-
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { TreeItemCollapsibleState } from "vscode";
+import { HALLexer } from "./grammar/HALLexer";
+import { HALParser } from "./grammar/HALParser";
 import { HalcmdManpage } from "./halcmd-manpage";
 
-const LANGUAGE_SERVER_ID = "linuxcncLanguageServer";
 
 let connection = createConnection(ProposedFeatures.all);
 
@@ -146,6 +154,43 @@ documents.onDidChangeContent(change => {
     validateDocument(change.document);
 });
 
+class DiagnosticErrorCollector implements ParserErrorListener {
+
+    findings: Diagnostic[];
+    private _doc: TextDocument;
+
+    constructor(document: TextDocument) {
+        this._doc = document;
+        this.findings = [];
+    }
+
+    syntaxError(recognizer: Recognizer<Token, any>, offendingSymbol: Token | undefined, line: number, column: number, msg: string, e: RecognitionException | undefined) {
+        let finding: Diagnostic = {
+            severity: DiagnosticSeverity.Error,
+            range: {
+                start: this._doc.positionAt(offendingSymbol ? offendingSymbol.startIndex : 0),
+                end: this._doc.positionAt(offendingSymbol ? offendingSymbol.stopIndex + 1 : 0)
+            },
+            message: msg,
+            source: "linuxcnc-hal" //huh?
+        }
+        this.findings.push(finding);
+    }
+
+    reportAmbiguity(recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, exact: boolean, ambigAlts: BitSet | undefined, configs: ATNConfigSet) {
+        console.log("reportAmbiguity");
+    }
+
+    reportAttemptingFullContext(recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, conflictingAlts: BitSet | undefined, conflictState: SimulatorState) {
+        console.log("reportAttemptingFullContext");
+    }
+
+    reportContextSensitivity(recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, prediction: number, acceptState: SimulatorState) {
+        console.log("reportContextSensitivity");
+    }
+
+}
+
 /**
  * 
  * @param document 
@@ -153,13 +198,26 @@ documents.onDidChangeContent(change => {
 async function validateDocument(document: TextDocument): Promise<void> {
     let settings = await getDocumentSettings(document.uri);
 
-    let text = document.getText();
-    let pattern = /\bloadrt\b/g;
 
     let problems = 0;
-    let findings: Diagnostic[] = [];
 
     // TODO: Do real validation
+
+    let input = CharStreams.fromString(document.getText());
+    let lexer = new HALLexer(input);
+    let errorCollector = new DiagnosticErrorCollector(document);
+    let parser = new HALParser(new CommonTokenStream(lexer));
+    parser.removeErrorListeners();
+    parser.addErrorListener(errorCollector);
+    parser.hal();
+
+    // reply findings
+    connection.sendDiagnostics({
+        uri: document.uri,
+        diagnostics: errorCollector.findings
+    });
+
+    /*
     let m: RegExpExecArray | null
     while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
         problems++;
@@ -189,12 +247,7 @@ async function validateDocument(document: TextDocument): Promise<void> {
         }
         findings.push(finding);
     }
-
-    // reply findings
-    connection.sendDiagnostics({
-        uri: document.uri,
-        diagnostics: findings
-    });
+    */
 }
 
 /**
@@ -210,20 +263,23 @@ connection.onDidChangeWatchedFiles((event) => {
 connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] => {
     return HalcmdManpage.map(e => {
         return {
-            label : e.label,
-            kind : e.kind,
+            label: e.label,
+            kind: e.kind,
             data: e.label,
         }
     });
 });
 
+/**
+ * The request is sent from the client to the server to resolve additional information for a given completion item.
+ */
 connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
     let found = HalcmdManpage.find(e => e.label === item.data);
-    if(found) {
+    if (found) {
         item.detail = found.detail;
         item.documentation = found.documentation;
-        if(found.deprecated) {
-            item.tags = [CompletionItemTag.Deprecated]; 
+        if (found.deprecated) {
+            item.tags = [CompletionItemTag.Deprecated];
         }
     }
     return item;

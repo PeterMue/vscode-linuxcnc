@@ -1,7 +1,6 @@
-import { ForkOptions } from "child_process";
+import { LANGUAGE_SERVER_ID, LANGUAGE_SERVER_NAME } from "../../common/out/constants";
 import * as path from "path";
-import { workspace, ExtensionContext } from "vscode";
-
+import { ExtensionContext, workspace } from "vscode";
 import {
     LanguageClient,
     LanguageClientOptions,
@@ -11,24 +10,27 @@ import {
 
 let client: LanguageClient;
 
+/**
+ * Called by vscode on activation
+ * @param context ExtensionContext
+ * @see package.json#activationEvents
+ */
 export function activate(context: ExtensionContext) {
-    let serverModule = context.asAbsolutePath(
-        path.join("server", "out", "server.js")
-    );
-
-    let debugOptions: ForkOptions = {
-        execArgv: ["--nolazy", "--inspect=6009"]
-    };
+    let serverModule = context.asAbsolutePath(path.join("server", "out", "server.js"));
 
     let serverOptions: ServerOptions = {
+        // Normal run
         run: {
             module: serverModule,
             transport: TransportKind.ipc
         },
+        // Debugging
         debug: {
             module: serverModule,
             transport: TransportKind.ipc,
-            options: debugOptions
+            options: {
+                execArgv: ["--nolazy", "--inspect=6009"]
+            }
         }
     }
 
@@ -43,8 +45,8 @@ export function activate(context: ExtensionContext) {
     };
 
     client = new LanguageClient(
-        "linuxcncLanguageServer",
-        "LinuxCNC Language Server",
+        LANGUAGE_SERVER_ID,
+        LANGUAGE_SERVER_NAME,
         serverOptions,
         clientOptions
     );
@@ -52,6 +54,9 @@ export function activate(context: ExtensionContext) {
     client.start();
 }
 
+/**
+ * Shutdown client and server
+ */
 export function deactivate(): Thenable<void> | undefined {
     if (!client) {
         return undefined;

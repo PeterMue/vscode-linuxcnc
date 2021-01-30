@@ -9,7 +9,7 @@
         "rootDir": "src",
         "sourceMap": true,
         "composite": true,
-        "declaration": true,
+        "declaration": true
     },
     "include": [
         "src"
@@ -18,10 +18,5 @@
         "node_modules",
         ".vscode-test",
         "out"
-    ],
-    "references": [
-        {
-            "path": "../common"
-        }
     ]
 }

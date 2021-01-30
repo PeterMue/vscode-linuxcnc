@@ -2,20 +2,28 @@
 	"compilerOptions": {
 		"module": "commonjs",
 		"target": "es2019",
-		"lib": ["ES2019"],
+		"lib": [
+			"ES2019"
+		],
 		"outDir": "out",
-		"rootDir": "src",
-		"sourceMap": true
+		"rootDir": ".",
+		"sourceMap": true,
+		"declaration": true
 	},
-	"include": [
-		"src"
-, "server/src/halcmd.ts"	],
 	"exclude": [
 		"node_modules",
-		".vscode-test"
+		".vscode-test",
+		"out"
 	],
 	"references": [
-		{ "path": "./client" },
-		{ "path": "./server" }
+		{
+			"path": "./client"
+		}, 
+		{
+			"path": "./server"
+		},
+		{
+			"path": "./common"
+		}
 	]
 }

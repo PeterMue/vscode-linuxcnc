@@ -1,4 +1,4 @@
-import { MarkupKind, CompletionItemKind } from "vscode-languageserver";
+import { CompletionItemKind, MarkupKind } from "vscode-languageserver";
 
 export const HalcmdManpage = [{
     label: "loadrt",
