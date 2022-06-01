@@ -1,24 +1,17 @@
 import {
     CharStreams,
     CommonTokenStream,
-    Parser,
-    ParserErrorListener,
-    RecognitionException,
-    Recognizer,
-    Token
+    ParserRuleContext,
+    Token,
+    TokenStream
 } from "antlr4ts";
-import { ATNConfigSet } from "antlr4ts/atn/ATNConfigSet";
-import { SimulatorState } from "antlr4ts/atn/SimulatorState";
-import { DFA } from "antlr4ts/dfa/DFA";
-import { BitSet } from "antlr4ts/misc/BitSet";
-import { LANGUAGE_SERVER_ID } from "../../common/out/constants";
+import DiagnosticErrorCollector from "./diagnosticErrorCollector";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
     CompletionItem,
+    CompletionItemKind,
     CompletionItemTag,
     createConnection,
-    Diagnostic,
-    DiagnosticSeverity,
     DidChangeConfigurationNotification,
     DidChangeConfigurationParams,
     InitializeParams,
@@ -28,9 +21,13 @@ import {
     TextDocuments,
     TextDocumentSyncKind
 } from "vscode-languageserver/node";
+import { LANGUAGE_SERVER_ID } from "../../common/out/constants";
 import { HALLexer } from "./grammar/HALLexer";
 import { HALParser } from "./grammar/HALParser";
-import { HalcmdManpage } from "./halcmd-manpage";
+import { HalcmdManpage } from "./halcmdManpage";
+import { CodeCompletionCore } from "antlr4-c3";
+import { ParseTree } from "antlr4ts/tree/ParseTree";
+import { TerminalNode } from "antlr4ts/tree/TerminalNode";
 
 
 let connection = createConnection(ProposedFeatures.all);
@@ -140,7 +137,7 @@ function getDocumentSettings(resource: string): Thenable<LinuxcncLanguageServerS
 }
 
 /**
- * 
+ * Document was closed, so remove saved settings.
  * @param textDocument 
  */
 documents.onDidClose(e => {
@@ -148,60 +145,20 @@ documents.onDidClose(e => {
 });
 
 /**
- * 
+ * Content changed, so revalidate.
  */
 documents.onDidChangeContent(change => {
     validateDocument(change.document);
 });
 
-class DiagnosticErrorCollector implements ParserErrorListener {
-
-    findings: Diagnostic[];
-    private _doc: TextDocument;
-
-    constructor(document: TextDocument) {
-        this._doc = document;
-        this.findings = [];
-    }
-
-    syntaxError(recognizer: Recognizer<Token, any>, offendingSymbol: Token | undefined, line: number, column: number, msg: string, e: RecognitionException | undefined) {
-        let finding: Diagnostic = {
-            severity: DiagnosticSeverity.Error,
-            range: {
-                start: this._doc.positionAt(offendingSymbol ? offendingSymbol.startIndex : 0),
-                end: this._doc.positionAt(offendingSymbol ? offendingSymbol.stopIndex + 1 : 0)
-            },
-            message: msg,
-            source: "linuxcnc-hal" //huh?
-        }
-        this.findings.push(finding);
-    }
-
-    reportAmbiguity(recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, exact: boolean, ambigAlts: BitSet | undefined, configs: ATNConfigSet) {
-        console.log("reportAmbiguity");
-    }
-
-    reportAttemptingFullContext(recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, conflictingAlts: BitSet | undefined, conflictState: SimulatorState) {
-        console.log("reportAttemptingFullContext");
-    }
-
-    reportContextSensitivity(recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, prediction: number, acceptState: SimulatorState) {
-        console.log("reportContextSensitivity");
-    }
-
-}
-
 /**
- * 
+ * Validate a TextDocument against a grammar utilizing antlr4.
  * @param document 
  */
 async function validateDocument(document: TextDocument): Promise<void> {
     let settings = await getDocumentSettings(document.uri);
 
-
     let problems = 0;
-
-    // TODO: Do real validation
 
     let input = CharStreams.fromString(document.getText());
     let lexer = new HALLexer(input);
@@ -210,6 +167,7 @@ async function validateDocument(document: TextDocument): Promise<void> {
     parser.removeErrorListeners();
     parser.addErrorListener(errorCollector);
     parser.hal();
+
 
     // reply findings
     connection.sendDiagnostics({
@@ -261,6 +219,34 @@ connection.onDidChangeWatchedFiles((event) => {
  * 
  */
 connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] => {
+    let doc = documents.get(params.textDocument.uri)!;
+    let pos = params.position;
+
+    let input = CharStreams.fromString(doc.getText());
+    let lexer = new HALLexer(input);
+    let tokenStream = new CommonTokenStream(lexer);
+    let parser = new HALParser(tokenStream);
+    let tree = parser.hal();
+
+    let index = computeTokenIndex(tree, { line: pos.line, column : pos.character + 1 })!;
+    let ccc = new CodeCompletionCore(parser);
+    let candidates = ccc.collectCandidates(index);
+
+    let completions : string[] = [];
+    candidates.tokens.forEach((_, k) => {
+        completions.push(parser.vocabulary.getSymbolicName(k)!.toLowerCase());
+    });
+
+    if(completions.length !== 0) {
+        return completions.map(e => {
+            return {
+            label : e,
+            kind: CompletionItemKind.Function,
+            data: e
+            };
+        });
+    }
+
     return HalcmdManpage.map(e => {
         return {
             label: e.label,
@@ -269,6 +255,40 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
         }
     });
 });
+
+export type CaretPosition = {
+    line: number,
+    column: number
+}
+
+export function computeTokenIndex(parseTree : ParseTree, caretPosition : CaretPosition) : number | undefined {
+    if(parseTree instanceof TerminalNode) {
+        return computeTokenIndexOfTerminalNode(parseTree, caretPosition);
+    } else {
+        return computeTokenIndexOfChildNode(parseTree, caretPosition);
+    }
+}
+
+function computeTokenIndexOfTerminalNode(tree : TerminalNode, caretPosition : CaretPosition) : number | undefined {
+    let start = tree.symbol.charPositionInLine;
+    let stop = start + tree.text.length;
+
+    // check if symbol is in the same line and caret within the symbol (text)
+    if(tree.symbol.line == caretPosition.line && start <= caretPosition.column && caretPosition.column <= stop) {
+        return tree.symbol.tokenIndex;
+    }
+    return undefined;
+}
+
+function computeTokenIndexOfChildNode(tree : ParseTree, caretPosition : CaretPosition) : number | undefined {
+    for(let i = 0, max = tree.childCount; i<max; i++) {
+        let index = computeTokenIndex(tree.getChild(i), caretPosition);
+        if(undefined !== index) {
+            return index;
+        }
+    }
+    return undefined;
+}
 
 /**
  * The request is sent from the client to the server to resolve additional information for a given completion item.

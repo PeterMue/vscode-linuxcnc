@@ -14,8 +14,8 @@
                 "--extensionDevelopmentPath=${workspaceFolder}"
             ],
             "outFiles": [
-                "${workspaceFolder/client/out/**/*.js",
-                "${workspaceFolder/common/out/**/*.js"
+                "${workspaceFolder}/client/out/**/*.js",
+                "${workspaceFolder}/common/out/**/*.js"
             ]
         },
         {
@@ -25,8 +25,8 @@
             "port": 6009,
             "restart": true,
             "outFiles": [
-                "${workspaceRoot}/server/out/**/*.js",
-                "${workspaceFolder/common/out/**/*.js"
+                "${workspaceFolder}/server/out/**/*.js",
+                "${workspaceFolder}/common/out/**/*.js"
             ]
         },
     ]
