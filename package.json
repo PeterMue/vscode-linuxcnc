@@ -1,7 +1,7 @@
 {
 	"name": "vscode-linuxcnc",
 	"displayName": "LinuxCNC",
-	"description": "Language support for LinuxCNC hal files.",
+	"description": "Language support for LinuxCNC hal and ini files.",
 	"version": "0.2.0",
 	"publisher": "PeterMue",
 	"engines": {
