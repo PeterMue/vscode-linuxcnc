@@ -41,10 +41,12 @@
                 "id": "linuxcnc-ini",
 				"aliases": [
 					"LinuxCNC INI",
-					"linuxcnc ini"
+					"linuxcnc ini",
+					"linuxcnc ini include"
 				],
 				"extensions": [
-					".ini"
+					".ini",
+					".inc"
 				],
 				"configuration": "./language-configuration.json"
 			}
